@@ -1,0 +1,464 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="CropPredict estimates and compares crop yields using a machine-learning ensemble." />
+  <title>CropPredict – Crop Yield Prediction System</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:ital,wght@0,300;0,400;0,500;1,300&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="/styles.css" />
+</head>
+<body>
+  <div class="bg-layer" aria-hidden="true">
+    <div class="orb orb-1"></div>
+    <div class="orb orb-2"></div>
+    <div class="orb orb-3"></div>
+    <div class="grid-overlay"></div>
+    <div class="noise-overlay"></div>
+  </div>
+
+  <header class="header">
+    <a class="logo" href="/" aria-label="CropPredict home">
+      <span class="logo-icon" aria-hidden="true">🌿</span>
+      <span class="logo-text">Crop<span class="logo-accent">Predict</span></span>
+    </a>
+    <nav class="site-nav" aria-label="Main navigation">
+      <a href="#predict">Predict</a>
+      <a href="#compare">Compare</a>
+      <a href="#history">History</a>
+      <a href="#explanation">Explanation</a>
+    </nav>
+    <div class="header-badge">
+      <span class="badge-dot"></span>
+      Model Online
+    </div>
+  </header>
+
+  <main class="main">
+    <section class="hero">
+      <div class="hero-eyebrow">Machine Learning for Agriculture</div>
+      <h1 class="hero-title">
+        Crop Yield <span class="hero-highlight">Prediction</span>
+      </h1>
+      <p class="hero-sub">
+        Smart Agricultural Yield Forecasting<br />
+        Ensemble estimates from HistGradientBoosting, XGBoost, and Ridge models.
+      </p>
+    </section>
+
+    <section class="card feature-card" id="predict">
+      <div class="card-inner">
+        <h2 class="section-title">Yield prediction</h2>
+        <p class="section-copy">Estimate yield for a crop, country, and year with the existing ensemble.</p>
+        <div class="form-grid">
+          <div class="field-group">
+            <label class="field-label" for="year"><span class="label-icon">📅</span> Year</label>
+            <input type="number" id="year" class="field-input" value="2023" min="1990" max="2100" />
+          </div>
+          <div class="field-group">
+            <label class="field-label" for="country"><span class="label-icon">🌍</span> Country</label>
+            <select id="country" class="field-input field-select">
+              <option value="argentina">Argentina</option>
+              <option value="australia">Australia</option>
+              <option value="brazil">Brazil</option>
+              <option value="canada">Canada</option>
+              <option value="china">China</option>
+              <option value="france">France</option>
+              <option value="germany">Germany</option>
+              <option value="india">India</option>
+              <option value="indonesia">Indonesia</option>
+              <option value="japan">Japan</option>
+              <option value="mexico">Mexico</option>
+              <option value="russia">Russia</option>
+              <option value="south africa">South Africa</option>
+              <option value="uk">UK</option>
+              <option value="usa" selected>USA</option>
+            </select>
+          </div>
+          <div class="field-group field-group--full">
+            <span class="field-label"><span class="label-icon">🌾</span> Crop</span>
+            <div class="crop-toggle" role="group" aria-label="Select crop">
+              <button type="button" class="crop-btn active" data-value="maize">🌽 Maize</button>
+              <button type="button" class="crop-btn" data-value="rice">🌿 Rice</button>
+              <button type="button" class="crop-btn" data-value="wheat">🌾 Wheat</button>
+            </div>
+            <input type="hidden" id="crop" value="maize" />
+          </div>
+        </div>
+        <button id="predict-btn" class="predict-btn" type="button">
+          <span class="btn-text">Run Prediction</span>
+          <span class="btn-icon" aria-hidden="true">→</span>
+          <span class="btn-shimmer" aria-hidden="true"></span>
+        </button>
+        <div class="loading-state" id="loading" aria-hidden="true">
+          <div class="loader-ring"><div class="loader-arc"></div></div>
+          <div class="loader-label">Analysing agronomic data…</div>
+        </div>
+        <p class="form-error" id="predict-error" role="alert"></p>
+        <section class="result-section" id="result-section" aria-live="polite">
+          <div class="result-card">
+            <div class="result-crop-row">
+              <span class="result-emoji" id="result-emoji">🌽</span>
+              <span class="result-crop-name" id="result-crop-name">Maize</span>
+              <span class="result-tag" id="result-tag"></span>
+            </div>
+            <div class="result-value" id="result-value">—</div>
+            <div class="result-unit">kg / hectare</div>
+            <div class="result-note" id="result-note"></div>
+            <div class="result-bar-wrap"><div class="result-bar" id="result-bar"></div></div>
+            <div class="result-meta" id="result-meta"></div>
+          </div>
+        </section>
+      </div>
+    </section>
+
+    <section class="card feature-card" id="compare">
+      <div class="card-inner">
+        <h2 class="section-title">Crop and country comparison</h2>
+        <p class="section-copy">Compare two supported scenarios using the same prediction model and validation rules.</p>
+        <div class="comparison-grid">
+          <fieldset class="comparison-option">
+            <legend>Scenario A</legend>
+            <label class="field-label" for="compare-country-a">Country</label>
+            <select id="compare-country-a" class="field-input field-select"></select>
+            <label class="field-label" for="compare-crop-a">Crop</label>
+            <select id="compare-crop-a" class="field-input field-select crop-select"></select>
+            <label class="field-label" for="compare-year-a">Year</label>
+            <input id="compare-year-a" class="field-input" type="number" value="2023" min="1990" max="2100" />
+          </fieldset>
+          <fieldset class="comparison-option">
+            <legend>Scenario B</legend>
+            <label class="field-label" for="compare-country-b">Country</label>
+            <select id="compare-country-b" class="field-input field-select"></select>
+            <label class="field-label" for="compare-crop-b">Crop</label>
+            <select id="compare-crop-b" class="field-input field-select crop-select"></select>
+            <label class="field-label" for="compare-year-b">Year</label>
+            <input id="compare-year-b" class="field-input" type="number" value="2025" min="1990" max="2100" />
+          </fieldset>
+        </div>
+        <button id="compare-btn" class="predict-btn secondary-btn" type="button">
+          <span class="btn-text">Compare predictions</span>
+          <span class="btn-icon" aria-hidden="true">↔</span>
+        </button>
+        <p class="form-error" id="compare-error" role="alert"></p>
+        <section class="comparison-result" id="comparison-result" aria-live="polite" hidden>
+          <div class="comparison-summary" id="comparison-summary"></div>
+          <div class="comparison-chart" id="comparison-chart" role="img" aria-label="Bar chart comparing predicted crop yields"></div>
+          <p class="chart-caption">Predicted yield in kg per hectare. Bar lengths are scaled to the larger prediction.</p>
+        </section>
+      </div>
+    </section>
+
+    <section class="card feature-card" id="history">
+      <div class="card-inner">
+        <div class="section-heading-row">
+          <div>
+            <h2 class="section-title">Prediction history</h2>
+            <p class="section-copy">Successful predictions are saved locally without personal information.</p>
+          </div>
+          <a class="text-button" href="/history/export">Export CSV</a>
+        </div>
+        <p class="history-status" id="history-status" aria-live="polite"></p>
+        <div class="table-wrap">
+          <table class="history-table">
+            <thead>
+              <tr><th>Timestamp (UTC)</th><th>Country</th><th>Crop</th><th>Year</th><th>Yield (kg/ha)</th></tr>
+            </thead>
+            <tbody id="history-body"></tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <section class="card feature-card" id="explanation">
+      <div class="card-inner">
+        <h2 class="section-title">Prediction explanation</h2>
+        <p class="section-copy">Review available global feature importance from the XGBoost component for the selected prediction inputs.</p>
+        <button id="explain-btn" class="text-button" type="button">Show feature ranking</button>
+        <p class="form-error" id="explain-error" role="alert"></p>
+        <div class="explanation-result" id="explanation-result" hidden>
+          <p class="explanation-method" id="explanation-method"></p>
+          <div class="importance-list" id="importance-list"></div>
+          <p class="explanation-notice" id="explanation-notice"></p>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer class="footer">
+    CropPredict &mdash; Crop Yield Prediction System &nbsp;·&nbsp; HGB + XGBoost + Ridge
+  </footer>
+
+  <script>
+    const API = '';
+    const COUNTRIES = [
+      ['argentina', 'Argentina'], ['australia', 'Australia'], ['brazil', 'Brazil'],
+      ['canada', 'Canada'], ['china', 'China'], ['france', 'France'],
+      ['germany', 'Germany'], ['india', 'India'], ['indonesia', 'Indonesia'],
+      ['japan', 'Japan'], ['mexico', 'Mexico'], ['russia', 'Russia'],
+      ['south africa', 'South Africa'], ['uk', 'UK'], ['usa', 'USA'],
+    ];
+    const CROPS = [['maize', 'Maize'], ['rice', 'Rice'], ['wheat', 'Wheat']];
+    const CROP_META = {
+      maize: { emoji: '🌽', label: 'Maize', maxRef: 12000 },
+      rice: { emoji: '🌿', label: 'Rice', maxRef: 10000 },
+      wheat: { emoji: '🌾', label: 'Wheat', maxRef: 9000 },
+    };
+
+    function populateSelect(id, options, selected) {
+      const select = document.getElementById(id);
+      options.forEach(([value, label]) => {
+        const option = document.createElement('option');
+        option.value = value;
+        option.textContent = label;
+        select.append(option);
+      });
+      if (selected) select.value = selected;
+    }
+
+    ['compare-country-a', 'compare-country-b'].forEach(id => populateSelect(id, COUNTRIES));
+    populateSelect('compare-country-a', [], 'usa');
+    populateSelect('compare-country-b', [], 'india');
+    ['compare-crop-a', 'compare-crop-b'].forEach(id => populateSelect(id, CROPS));
+    document.getElementById('compare-crop-a').value = 'maize';
+    document.getElementById('compare-crop-b').value = 'rice';
+
+    const cropBtns = document.querySelectorAll('.crop-btn');
+    const cropInput = document.getElementById('crop');
+    cropBtns.forEach(btn => btn.addEventListener('click', () => {
+      cropBtns.forEach(item => item.classList.remove('active'));
+      btn.classList.add('active');
+      cropInput.value = btn.dataset.value;
+    }));
+
+    async function requestJson(path, options) {
+      const response = await fetch(`${API}${path}`, options);
+      const data = await response.json();
+      if (!response.ok) {
+        const detail = Array.isArray(data.detail)
+          ? data.detail.map(item => item.msg).join('; ')
+          : data.detail;
+        throw new Error(detail || `Request failed (${response.status}).`);
+      }
+      return data;
+    }
+
+    function requestBody(value) {
+      return { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(value) };
+    }
+
+    function showError(id, message) {
+      document.getElementById(id).textContent = message;
+    }
+
+    function validateYear(value) {
+      const year = Number(value);
+      return Number.isInteger(year) && year >= 1990 && year <= 2100 ? year : null;
+    }
+
+    function primaryRequest() {
+      const year = validateYear(document.getElementById('year').value);
+      if (!year) throw new Error('Enter a whole year from 1990 to 2100.');
+      return {
+        year,
+        country: document.getElementById('country').value,
+        crop: cropInput.value,
+      };
+    }
+
+    function renderResult(data, request) {
+      const meta = CROP_META[request.crop];
+      const value = Number(data.yield);
+      document.getElementById('result-emoji').textContent = meta.emoji;
+      document.getElementById('result-crop-name').textContent = meta.label;
+      document.getElementById('result-value').textContent = value.toLocaleString(undefined, { maximumFractionDigits: 1 });
+      document.getElementById('result-note').textContent = data.note || '';
+      document.getElementById('result-tag').textContent = request.year > 2023 ? 'Forecast' : 'Historical fit';
+      document.getElementById('result-meta').textContent =
+        `${request.country.replace(/\b\w/g, char => char.toUpperCase())} · ${request.year}`;
+      document.getElementById('result-section').classList.add('visible');
+      const percent = Math.max(0, Math.min((value / meta.maxRef) * 100, 100));
+      document.getElementById('result-bar').style.width = `${percent}%`;
+    }
+
+    async function runPrediction() {
+      showError('predict-error', '');
+      let request;
+      try {
+        request = primaryRequest();
+      } catch (error) {
+        showError('predict-error', error.message);
+        return;
+      }
+      const button = document.getElementById('predict-btn');
+      const loading = document.getElementById('loading');
+      button.disabled = true;
+      loading.classList.add('visible');
+      loading.setAttribute('aria-hidden', 'false');
+      try {
+        const result = await requestJson('/predict', requestBody(request));
+        renderResult(result, request);
+        await loadHistory();
+      } catch (error) {
+        showError('predict-error', error.message);
+      } finally {
+        button.disabled = false;
+        loading.classList.remove('visible');
+        loading.setAttribute('aria-hidden', 'true');
+      }
+    }
+
+    function scenario(suffix) {
+      const year = validateYear(document.getElementById(`compare-year-${suffix}`).value);
+      if (!year) throw new Error(`Scenario ${suffix.toUpperCase()}: enter a whole year from 1990 to 2100.`);
+      return {
+        year,
+        country: document.getElementById(`compare-country-${suffix}`).value,
+        crop: document.getElementById(`compare-crop-${suffix}`).value,
+      };
+    }
+
+    function scenarioLabel(item) {
+      const country = COUNTRIES.find(([value]) => value === item.country)?.[1] || item.country;
+      return `${CROP_META[item.crop].label} · ${country} · ${item.year}`;
+    }
+
+    function renderComparison(data) {
+      const result = document.getElementById('comparison-result');
+      const chart = document.getElementById('comparison-chart');
+      chart.replaceChildren();
+      const entries = [
+        { item: data.first, label: scenarioLabel(data.first) },
+        { item: data.second, label: scenarioLabel(data.second) },
+      ];
+      const max = Math.max(...entries.map(entry => Number(entry.item.yield)), 1);
+      entries.forEach((entry, index) => {
+        const row = document.createElement('div');
+        row.className = 'chart-row';
+        const label = document.createElement('div');
+        label.className = 'chart-label';
+        label.textContent = entry.label;
+        const track = document.createElement('div');
+        track.className = 'chart-track';
+        const bar = document.createElement('div');
+        bar.className = `chart-bar chart-bar-${index + 1}`;
+        bar.style.width = `${Math.max(0, Number(entry.item.yield) / max * 100)}%`;
+        track.append(bar);
+        const value = document.createElement('strong');
+        value.className = 'chart-value';
+        value.textContent = `${Number(entry.item.yield).toLocaleString(undefined, { maximumFractionDigits: 1 })} kg/ha`;
+        row.append(label, track, value);
+        chart.append(row);
+      });
+      const diff = Number(data.difference_kg_ha);
+      const sign = diff > 0 ? '+' : '';
+      document.getElementById('comparison-summary').textContent =
+        `Difference (Scenario A − Scenario B): ${sign}${diff.toLocaleString(undefined, { maximumFractionDigits: 1 })} kg/ha`;
+      result.hidden = false;
+    }
+
+    async function runComparison() {
+      showError('compare-error', '');
+      let body;
+      try {
+        body = { first: scenario('a'), second: scenario('b') };
+      } catch (error) {
+        showError('compare-error', error.message);
+        return;
+      }
+      const button = document.getElementById('compare-btn');
+      button.disabled = true;
+      try {
+        const result = await requestJson('/compare', requestBody(body));
+        renderComparison(result);
+        await loadHistory();
+      } catch (error) {
+        showError('compare-error', error.message);
+      } finally {
+        button.disabled = false;
+      }
+    }
+
+    function addCell(row, value) {
+      const cell = document.createElement('td');
+      cell.textContent = value;
+      row.append(cell);
+    }
+
+    async function loadHistory() {
+      const body = document.getElementById('history-body');
+      const status = document.getElementById('history-status');
+      try {
+        const data = await requestJson('/history');
+        body.replaceChildren();
+        [...data.history].reverse().forEach(item => {
+          const row = document.createElement('tr');
+          const timestamp = new Date(item.timestamp);
+          addCell(row, Number.isNaN(timestamp.getTime()) ? item.timestamp : timestamp.toLocaleString());
+          addCell(row, item.country);
+          addCell(row, item.crop);
+          addCell(row, item.year);
+          addCell(row, Number(item.yield_kg_ha).toLocaleString(undefined, { maximumFractionDigits: 1 }));
+          body.append(row);
+        });
+        status.textContent = data.history.length ? `${data.history.length} saved prediction(s).` : 'No predictions saved yet.';
+      } catch (error) {
+        status.textContent = `Could not load history: ${error.message}`;
+      }
+    }
+
+    async function loadExplanation() {
+      showError('explain-error', '');
+      let request;
+      try {
+        request = primaryRequest();
+      } catch (error) {
+        showError('explain-error', error.message);
+        return;
+      }
+      const button = document.getElementById('explain-btn');
+      button.disabled = true;
+      try {
+        const data = await requestJson('/explain', requestBody(request));
+        document.getElementById('explanation-method').textContent = data.method;
+        document.getElementById('explanation-notice').textContent = data.notice;
+        const list = document.getElementById('importance-list');
+        list.replaceChildren();
+        const max = Math.max(...data.top_features.map(item => item.gain), 1);
+        data.top_features.forEach(item => {
+          const row = document.createElement('div');
+          row.className = 'importance-row';
+          const label = document.createElement('span');
+          label.textContent = item.feature.replaceAll('_', ' ');
+          const track = document.createElement('div');
+          track.className = 'chart-track';
+          const bar = document.createElement('div');
+          bar.className = 'chart-bar';
+          bar.style.width = `${item.gain / max * 100}%`;
+          track.append(bar);
+          const value = document.createElement('span');
+          value.className = 'importance-value';
+          value.textContent = Number(item.gain).toPrecision(4);
+          row.append(label, track, value);
+          list.append(row);
+        });
+        document.getElementById('explanation-result').hidden = false;
+      } catch (error) {
+        showError('explain-error', error.message);
+      } finally {
+        button.disabled = false;
+      }
+    }
+
+    document.getElementById('predict-btn').addEventListener('click', runPrediction);
+    document.getElementById('compare-btn').addEventListener('click', runComparison);
+    document.getElementById('explain-btn').addEventListener('click', loadExplanation);
+    document.getElementById('year').addEventListener('keydown', event => {
+      if (event.key === 'Enter') runPrediction();
+    });
+    loadHistory();
+  </script>
+</body>
+</html>
